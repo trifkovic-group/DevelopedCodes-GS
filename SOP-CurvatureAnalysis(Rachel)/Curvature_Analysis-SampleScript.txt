@@ -1,0 +1,373 @@
+#initialize variables for series number and path data should be saved in
+set srs 9
+set pth "D:/Geena/Rachel/Connectivity/Feb 27/5wt%_homo/Raw Data/"
+
+#variables that holds start and end pixels in each dimension. Used for cropping quadrants.
+set xa 0
+set xb 511
+set ya 0
+set yb 511
+set za 0
+set zb 40
+
+create HxDeconvolution
+"Deconvolution" data connect "min_Series0${srs}_t0_ch2"
+"Deconvolution" iterations setValue 10
+"Deconvolution" method setValue 1
+"Deconvolution" parameters setValues 1.4 0.64 1.518
+"Deconvolution" mode setValue 1
+"Deconvolution" action setValue 0
+"Deconvolution" fire
+
+create gaussianfilter
+"Gaussian Filter" inputImage connect ["Deconvolution" getResult]
+"Gaussian Filter" interpretation setValue 0
+"Gaussian Filter" kernelType setIndex 0 1
+"Gaussian Filter" kernelSize setValues 3 3 3
+"Gaussian Filter" doIt setValue 0
+"Gaussian Filter" fire
+
+create medianfilter
+"Median Filter" inputImage connect ["Gaussian Filter" getResult]
+"Median Filter" interpretation setValue 0
+"Median Filter" doIt setValue 0
+"Median Filter" fire
+
+create normalize
+"Normalize Grayscale" inputImage connect ["Median Filter" getResult]
+"Normalize Grayscale" interpretation setValue 1
+"Normalize Grayscale" rangeMode setValue 2
+"Normalize Grayscale" doIt setValue 0
+"Normalize Grayscale" fire
+
+create HxInteractiveThreshold
+"Interactive Thresholding" data connect ["Normalize Grayscale" getResult]
+"Interactive Thresholding" fire
+"Interactive Thresholding" intensityRange setValue 0 67
+"Interactive Thresholding" intensityRange setValue 1 500
+"Interactive Thresholding" doIt setValue 0
+"Interactive Thresholding" compute
+
+create removalsmallspots
+"Remove Small Spots" inputImage connect ["Interactive Thresholding" getResult]
+"Remove Small Spots" interpretation setValue 0
+"Remove Small Spots" size setValue 100
+"Remove Small Spots" doIt setValue 0
+"Remove Small Spots" fire
+
+
+create HxArithmetic
+"Arithmetic" inputA connect ["Remove Small Spots" getResult]
+"Arithmetic" expr0 setState {A}
+"Arithmetic" doIt setValue 0
+"Arithmetic" fire
+create HxArithmetic
+"Arithmetic 2" inputA connect ["Remove Small Spots" getResult]
+"Arithmetic 2" expr0 setState {A}
+"Arithmetic 2" doIt setValue 0
+"Arithmetic 2" fire
+create HxArithmetic
+"Arithmetic 3" inputA connect ["Remove Small Spots" getResult]
+"Arithmetic 3" expr0 setState {A}
+"Arithmetic 3" doIt setValue 0
+"Arithmetic 3" fire
+create HxArithmetic
+"Arithmetic 4" inputA connect ["Remove Small Spots" getResult]
+"Arithmetic 4" expr0 setState {A}
+"Arithmetic 4" doIt setValue 0
+"Arithmetic 4" fire
+
+#crop quadrants
+["Arithmetic" getResult] crop $xa [expr ${xb}/2] $ya [expr ${yb}/2] $za $zb
+["Arithmetic 2" getResult] crop [expr ${xb}/2] $xb $ya [expr ${yb}/2] $za $zb
+["Arithmetic 3" getResult] crop $xa [expr ${xb}/2] [expr ${yb}/2] $yb $za $zb
+["Arithmetic 4" getResult] crop [expr ${xb}/2] $xb [expr ${yb}/2] $yb $za $zb
+
+create HxIsosurface
+"Isosurface" data connect ["Arithmetic" getResult]
+"Isosurface" doIt setValue 0
+"Isosurface" fire
+"Isosurface" setViewerMask 16382
+"Isosurface" fire
+create HxIsosurface
+"Isosurface 2" data connect ["Arithmetic 2" getResult]
+"Isosurface 2" doIt setValue 0
+"Isosurface 2" fire
+"Isosurface 2" setViewerMask 16382
+"Isosurface 2" fire
+create HxIsosurface
+"Isosurface 3" data connect ["Arithmetic 3" getResult]
+"Isosurface 3" doIt setValue 0
+"Isosurface 3" fire
+"Isosurface 3" setViewerMask 16382
+"Isosurface 3" fire
+create HxIsosurface
+"Isosurface 4" data connect ["Arithmetic 4" getResult]
+"Isosurface 4" doIt setValue 0
+"Isosurface 4" fire
+"Isosurface 4" setViewerMask 16382
+"Isosurface 4" fire
+
+create HxViewBaseExtract
+"Extract Surface" module1 connect "Isosurface"
+"Extract Surface" action setValue 0
+"Extract Surface" fire
+create HxViewBaseExtract
+"Extract Surface 2" module1 connect "Isosurface 2"
+"Extract Surface 2" action setValue 0
+"Extract Surface 2" fire
+create HxViewBaseExtract
+"Extract Surface 3" module1 connect "Isosurface 3"
+"Extract Surface 3" action setValue 0
+"Extract Surface 3" fire
+create HxViewBaseExtract
+"Extract Surface 4" module1 connect "Isosurface 4"
+"Extract Surface 4" action setValue 0
+"Extract Surface 4" fire
+
+
+create HxRemeshSurface
+"Remesh Surface" data connect ["Extract Surface" getResult]
+"Remesh Surface" desiredSize setValue 2 100
+"Remesh Surface" remesh setValue 0
+"Remesh Surface" fire
+create HxRemeshSurface
+"Remesh Surface 2" data connect ["Extract Surface 2" getResult]
+"Remesh Surface 2" desiredSize setValue 2 100
+"Remesh Surface 2" remesh setValue 0
+"Remesh Surface 2" fire
+create HxRemeshSurface
+"Remesh Surface 3" data connect ["Extract Surface 3" getResult]
+"Remesh Surface 3" desiredSize setValue 2 100
+"Remesh Surface 3" remesh setValue 0
+"Remesh Surface 3" fire
+create HxRemeshSurface
+"Remesh Surface 4" data connect ["Extract Surface 4" getResult]
+"Remesh Surface 4" desiredSize setValue 2 100
+"Remesh Surface 4" remesh setValue 0
+"Remesh Surface 4" fire
+
+
+create HxSurfaceSmooth
+"Smooth Surface" data connect ["Remesh Surface" getResult]
+"Smooth Surface" action setValue 0
+"Smooth Surface" fire
+create HxSurfaceSmooth
+"Smooth Surface 2" data connect ["Remesh Surface 2" getResult]
+"Smooth Surface 2" action setValue 0
+"Smooth Surface 2" fire
+create HxSurfaceSmooth
+"Smooth Surface 3" data connect ["Remesh Surface 3" getResult]
+"Smooth Surface 3" action setValue 0
+"Smooth Surface 3" fire
+create HxSurfaceSmooth
+"Smooth Surface 4" data connect ["Remesh Surface 4" getResult]
+"Smooth Surface 4" action setValue 0
+"Smooth Surface 4" fire
+
+
+
+create HxGetCurvature
+"Curvature" data connect ["Smooth Surface" getResult]
+"Curvature" output setValue 2
+"Curvature" doIt setValue 0
+"Curvature" fire
+
+create HxGetCurvature
+"Curvature 2" data connect ["Smooth Surface" getResult]
+"Curvature 2" output setValue 4
+"Curvature 2" doIt setValue 0
+"Curvature 2" fire
+
+create HxGetCurvature
+"Curvature 3" data connect ["Smooth Surface 2" getResult]
+"Curvature 3" output setValue 2
+"Curvature 3" doIt setValue 0
+"Curvature 3" fire
+
+create HxGetCurvature
+"Curvature 4" data connect ["Smooth Surface 2" getResult]
+"Curvature 4" output setValue 4
+"Curvature 4" doIt setValue 0
+"Curvature 4" fire
+
+create HxGetCurvature
+"Curvature 5" data connect ["Smooth Surface 3" getResult]
+"Curvature 5" output setValue 2
+"Curvature 5" doIt setValue 0
+"Curvature 5" fire
+
+create HxGetCurvature
+"Curvature 6" data connect ["Smooth Surface 3" getResult]
+"Curvature 6" output setValue 4
+"Curvature 6" doIt setValue 0
+"Curvature 6" fire
+
+create HxGetCurvature
+"Curvature 7" data connect ["Smooth Surface 4" getResult]
+"Curvature 7" output setValue 2
+"Curvature 7" doIt setValue 0
+"Curvature 7" fire
+
+create HxGetCurvature
+"Curvature 8" data connect ["Smooth Surface 4" getResult]
+"Curvature 8" output setValue 4
+"Curvature 8" doIt setValue 0
+"Curvature 8" fire
+
+
+create label_ratio
+"Volume Fraction" inputImage connect ["Arithmetic" getResult]
+"Volume Fraction" interpretation setValue 0
+"Volume Fraction" doIt setValue 0
+"Volume Fraction" fire
+create label_ratio
+"Volume Fraction 2" inputImage connect ["Arithmetic 2" getResult]
+"Volume Fraction 2" interpretation setValue 0
+"Volume Fraction 2" doIt setValue 0
+"Volume Fraction 2" fire
+create label_ratio
+"Volume Fraction 3" inputImage connect ["Arithmetic 3" getResult]
+"Volume Fraction 3" interpretation setValue 0
+"Volume Fraction 3" doIt setValue 0
+"Volume Fraction 3" fire
+create label_ratio
+"Volume Fraction 4" inputImage connect ["Arithmetic 4" getResult]
+"Volume Fraction 4" interpretation setValue 0
+"Volume Fraction 4" doIt setValue 0
+"Volume Fraction 4" fire
+
+
+create area
+"Area" inputImage connect ["Arithmetic" getResult]
+"Area" interpretation setValue 0
+"Area" doIt setValue 0
+"Area" fire
+create area
+"Area 2" inputImage connect ["Arithmetic 2" getResult]
+"Area 2" interpretation setValue 0
+"Area 2" doIt setValue 0
+"Area 2" fire
+create area
+"Area 3" inputImage connect ["Arithmetic 3" getResult]
+"Area 3" interpretation setValue 0
+"Area 3" doIt setValue 0
+"Area 3" fire
+create area
+"Area 4" inputImage connect ["Arithmetic 4" getResult]
+"Area 4" interpretation setValue 0
+"Area 4" doIt setValue 0
+"Area 4" fire
+
+#save surfaces as .stl files
+["Smooth Surface" getResult] exportData "STL binary Little Endian" "${pth}Surfaces/S${srs}_Q1.stl"
+["Smooth Surface 2" getResult] exportData "STL binary Little Endian" "${pth}Surfaces/S${srs}_Q2.stl"
+["Smooth Surface 3" getResult] exportData "STL binary Little Endian" "${pth}Surfaces/S${srs}_Q3.stl"
+["Smooth Surface 4" getResult] exportData "STL binary Little Endian" "${pth}Surfaces/S${srs}_Q4.stl"
+
+#save area and volume data to a text file
+set fo [open "${pth}misc/S${srs}.txt" w]
+
+puts $fo "Total Areas:"
+puts $fo [["Area" getResult] getValue 1 0]
+puts $fo [["Area 2" getResult] getValue 1 0]
+puts $fo [["Area 3" getResult] getValue 1 0]
+puts $fo [["Area 4" getResult] getValue 1 0]
+
+puts $fo "Volumes:"
+puts $fo [["Volume Fraction" getResult] getValue 2 0]
+puts $fo [["Volume Fraction 2" getResult] getValue 2 0]
+puts $fo [["Volume Fraction 3" getResult] getValue 2 0]
+puts $fo [["Volume Fraction 4" getResult] getValue 2 0]
+
+close $fo
+
+
+#save curvature values to text files
+
+set fo [open "${pth}Curvatures/Mean/S${srs}_Q1.txt" w]
+set i 0
+
+while {$i < ["MeanCurvature" nValues]} {
+puts $fo ["MeanCurvature" getValue $i]
+set i [expr $i + 1]
+}
+
+close $fo
+
+
+set fo [open "${pth}Curvatures/Mean/S${srs}_Q2.txt" w]
+set i 0
+
+while {$i < ["MeanCurvature2" nValues]} {
+puts $fo ["MeanCurvature2" getValue $i]
+set i [expr $i + 1]
+}
+
+close $fo
+
+
+set fo [open "${pth}Curvatures/Mean/S${srs}_Q3.txt" w]
+set i 0
+
+while {$i < ["MeanCurvature3" nValues]} {
+puts $fo ["MeanCurvature3" getValue $i]
+set i [expr $i + 1]
+}
+
+close $fo
+
+
+set fo [open "${pth}Curvatures/Mean/S${srs}_Q4.txt" w]
+set i 0
+
+while {$i < ["MeanCurvature4" nValues]} {
+puts $fo ["MeanCurvature4" getValue $i]
+set i [expr $i + 1]
+}
+
+close $fo
+
+
+set fo [open "${pth}Curvatures/Gaussian/S${srs}_Q1.txt" w]
+set i 0
+
+while {$i < ["GaussCurvature" nValues]} {
+puts $fo ["GaussCurvature" getValue $i]
+set i [expr $i + 1]
+}
+
+close $fo
+
+
+set fo [open "${pth}Curvatures/Gaussian/S${srs}_Q2.txt" w]
+set i 0
+
+while {$i < ["GaussCurvature2" nValues]} {
+puts $fo ["GaussCurvature2" getValue $i]
+set i [expr $i + 1]
+}
+
+close $fo
+
+
+set fo [open "${pth}Curvatures/Gaussian/S${srs}_Q3.txt" w]
+set i 0
+
+while {$i < ["GaussCurvature3" nValues]} {
+puts $fo ["GaussCurvature3" getValue $i]
+set i [expr $i + 1]
+}
+
+close $fo
+
+
+set fo [open "${pth}Curvatures/Gaussian/S${srs}_Q4.txt" w]
+set i 0
+
+while {$i < ["GaussCurvature4" nValues]} {
+puts $fo ["GaussCurvature4" getValue $i]
+set i [expr $i + 1]
+}
+
+close $fo

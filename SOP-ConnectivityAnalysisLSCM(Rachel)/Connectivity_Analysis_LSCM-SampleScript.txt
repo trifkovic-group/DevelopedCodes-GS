@@ -1,0 +1,137 @@
+#create variables with file path and series number
+set pth "D:/Geena/Rachel/Connectivity/Nov 13/10wt%-quadrants/Raw Data/"
+set srs 60
+
+#Apply deconvolution
+create HxDeconvolution
+"Deconvolution" data connect "min_Series0${srs}_t0_ch2"
+"Deconvolution" iterations setValue 10
+"Deconvolution" method setValue 1
+"Deconvolution" parameters setValues 0.95 0.65 1.33
+"Deconvolution" mode setValue 1
+"Deconvolution" action setValue 0
+"Deconvolution" fire
+
+#Apply gaussian filter
+create gaussianfilter
+"Gaussian Filter" inputImage connect ["Deconvolution" getResult]
+"Gaussian Filter" interpretation setValue 0
+"Gaussian Filter" kernelType setIndex 0 1
+"Gaussian Filter" kernelSize setValues 9 9 9
+"Gaussian Filter" doIt setValue 0
+"Gaussian Filter" fire
+
+#Apply median filter
+create medianfilter
+"Median Filter" inputImage connect ["Gaussian Filter" getResult]
+"Median Filter" interpretation setValue 0
+"Median Filter" doIt setValue 0
+"Median Filter" fire
+
+#Apply normalize grayscale
+create normalize
+"Normalize Grayscale" inputImage connect ["Median Filter" getResult]
+"Normalize Grayscale" interpretation setValue 1
+"Normalize Grayscale" rangeMode setValue 2
+"Normalize Grayscale" doIt setValue 0
+"Normalize Grayscale" fire
+
+#Apply interactive thresholding at 67 and 255
+create HxInteractiveThreshold
+"Interactive Thresholding" data connect ["Normalize Grayscale" getResult]
+"Interactive Thresholding" fire
+"Interactive Thresholding" intensityRange setValue 0 67
+"Interactive Thresholding" intensityRange setValue 1 255
+"Interactive Thresholding" doIt setValue 0
+"Interactive Thresholding" compute
+
+#Apply remove small spots
+create removalsmallspots
+"Remove Small Spots" inputImage connect ["Interactive Thresholding" getResult]
+"Remove Small Spots" interpretation setValue 0
+"Remove Small Spots" size setValue 100
+"Remove Small Spots" doIt setValue 0
+"Remove Small Spots" fire
+
+#Create compliment image
+create logical_not
+"NOT" inputImage connect ["Remove Small Spots" getResult]
+"NOT" doIt setValue 0
+"NOT" fire
+
+#Apply Volume fraction for both images
+create label_ratio
+"Volume Fraction" inputImage connect ["Remove Small Spots" getResult]
+"Volume Fraction" interpretation setValue 0
+"Volume Fraction" doIt setValue 0
+"Volume Fraction" fire
+create label_ratio
+"Volume Fraction 2" inputImage connect ["NOT" getResult]
+"Volume Fraction 2" interpretation setValue 0
+"Volume Fraction 2" doIt setValue 0
+"Volume Fraction 2" fire
+
+#Apply auto skeleton for both images
+create HxExtAutoSkeleton
+"Auto Skeleton" data connect ["Remove Small Spots" getResult]
+"Auto Skeleton" doIt setValue 0
+"Auto Skeleton" fire
+create HxExtAutoSkeleton
+"Auto Skeleton 2" data connect ["NOT" getResult]
+"Auto Skeleton 2" doIt setValue 0
+"Auto Skeleton 2" fire
+
+#Apply spatial graph statistics for both images
+create HxSpatialGraphStats
+"Spatial Graph Statistics" data connect ["Auto Skeleton" getResult]
+"Spatial Graph Statistics" doIt setValue 0
+"Spatial Graph Statistics" fire
+"Spatial Graph View" setViewerMask 16382
+"Spatial Graph View" fire
+create HxSpatialGraphStats
+"Spatial Graph Statistics 2" data connect ["Auto Skeleton 2" getResult]
+"Spatial Graph Statistics 2" doIt setValue 0
+"Spatial Graph Statistics 2" fire
+"Spatial Graph View 2" setViewerMask 16382
+"Spatial Graph View 2" fire
+
+#Apply label analysis for both images
+create HxAnalyzeLabels
+"Label Analysis" data connect ["Remove Small Spots" getResult]
+"Label Analysis" interpretation setValue 0
+"Label Analysis" doIt setValue 0
+"Label Analysis" fire
+create HxAnalyzeLabels
+"Label Analysis 2" data connect ["Not" getResult]
+"Label Analysis 2" interpretation setValue 0
+"Label Analysis 2" doIt setValue 0
+"Label Analysis 2" fire
+
+#Apply analysis filter for both images
+set val [expr [["Volume Fraction" getResult] getValue 2 0]/1000]
+create HxFilterAnalysis
+"Analysis Filter" data connect ["Label Analysis" getResult]
+"Analysis Filter" filter setState "Volume3d > ${val}"
+"Analysis Filter" doIt setValue 0
+"Analysis Filter" fire
+set val [expr [["Volume Fraction 2" getResult] getValue 2 0]/1000]
+create HxFilterAnalysis
+"Analysis Filter 2" data connect ["Label Analysis 2" getResult]
+"Analysis Filter 2" filter setState "Volume3d > ${val}"
+"Analysis Filter 2" doIt setValue 0
+"Analysis Filter 2" fire
+
+
+#save auto skeleton and spatial graph statistics data
+["Auto Skeleton" getResult] exportXML "${pth}Connectivity/S${srs}_c1.xml"
+["Spatial Graph Statistics" getResult] exportData "Microsoft XML Spreadsheet 2003" "${pth}Connectivity/S${srs}_c2.xml"
+["Auto Skeleton 2" getResult] exportXML "${pth}Connectivity/S${srs}_c3.xml"
+["Spatial Graph Statistics 2" getResult] exportData "Microsoft XML Spreadsheet 2003" "${pth}Connectivity/S${srs}_c4.xml"
+
+
+#save number of isolated objects to a text file
+set fo [open "${pth}misc/S${srs}.txt" w]
+puts $fo "Isolated Objects (L/W):"
+puts $fo [["Analysis Filter" getResult] getNumRows]
+puts $fo [["Analysis Filter 2" getResult] getNumRows]
+close $fo

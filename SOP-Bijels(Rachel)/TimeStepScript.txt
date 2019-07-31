@@ -1,0 +1,129 @@
+set i 12
+
+while {$i < 27} {
+
+"3wtperchitinbijels-trial1_Series008" time setValue $i
+"3wtperchitinbijels-trial1_Series008" fire
+
+
+"Deconvolution" action setValue 1
+"Deconvolution" fire
+
+"Deconvolution 2" action setValue 1
+"Deconvolution 2" fire
+
+"Median Filter" doIt setValue 0
+"Median Filter" fire
+
+"Median Filter 2" doIt setValue 0
+"Median Filter 2" fire
+
+"Normalize Grayscale" doIt setValue 0
+"Normalize Grayscale" fire
+
+"Normalize Grayscale 2" doIt setValue 0
+"Normalize Grayscale 2" fire
+
+"Interactive Thresholding" intensityRange setValue 1 55
+"Interactive Thresholding" intensityRange setValue 2 255
+"Interactive Thresholding" doIt setValue 0
+"Interactive Thresholding" compute
+
+"Interactive Thresholding 2" intensityRange setValue 1 53
+"Interactive Thresholding 2" intensityRange setValue 2 255
+"Interactive Thresholding 2" doIt setValue 0
+"Interactive Thresholding 2" compute
+
+"Remove Small Spots" interpretation setValue 1
+"Remove Small Spots" size setValue 100
+"Remove Small Spots" doIt setValue 0
+"Remove Small Spots" fire
+
+"Remove Small Spots 2" interpretation setValue 1
+"Remove Small Spots 2" size setValue 100
+"Remove Small Spots 2" doIt setValue 0
+"Remove Small Spots 2" fire
+
+"Remove Small Holes" interpretation setValue 1
+"Remove Small Holes" size setValue 50
+"Remove Small Holes" doIt setValue 0
+"Remove Small Holes" fire
+
+"Remove Small Holes 2" interpretation setValue 1
+"Remove Small Holes 2" size setValue 50
+"Remove Small Holes 2" doIt setValue 0
+"Remove Small Holes 2" fire
+
+"Opening" doIt setValue 0
+"Opening" fire
+
+"Opening 2" doIt setValue 0
+"Opening 2" fire
+
+"Resample" average setValues 3 3 1
+"Resample" action setValue 0
+"Resample" fire
+
+"Resample 2" average setValues 3 3 1
+"Resample 2" action setValue 0
+"Resample 2" fire
+
+"AND Image" doIt setValue 0
+"AND Image" fire
+
+"Volume Fraction" doIt setValue 0
+"Volume Fraction" fire
+
+"Volume Fraction 2" doIt setValue 0
+"Volume Fraction 2" fire
+
+"Volume Fraction 3" doIt setValue 0
+"Volume Fraction 3" fire
+
+"Area" interpretation setValue 0
+"Area" doIt setValue 0
+"Area" fire
+
+"Area 2" interpretation setValue 0
+"Area 2" doIt setValue 0
+"Area 2" fire
+
+"Average Object Thickness" doIt setValue 0
+"Average Object Thickness" fire
+
+"Average Object Thickness 2" doIt setValue 0
+"Average Object Thickness 2" fire
+
+"Auto Skeleton" doIt setValue 0
+"Auto Skeleton" fire
+
+"Auto Skeleton 2" doIt setValue 0
+"Auto Skeleton 2" fire
+
+"Generate Surface" action setValue 0
+"Generate Surface" fire
+
+"Generate Surface 2" action setValue 0
+"Generate Surface 2" fire
+
+"Surface View" fire
+"Surface View 2" fire
+
+viewer 0 snapshot "D:/Geena/Rachel/Bijels - Jan 17/3wt%/Series 8/Snapshots/Threshold/$i.tiff"
+
+3wtperchitinbijels-trial1_Series008_t0_ch5.area exportData "csv" "D:/Geena/Rachel/Bijels - Jan 17/3wt%/Series 8/Area/C/C$i.csv"
+3wtperchitinbijels-trial1_Series008_t0_ch6.area exportData "csv" "D:/Geena/Rachel/Bijels - Jan 17/3wt%/Series 8/Area/L/L$i.csv"
+
+3wtperchitinbijels-trial1_Series008_t0_ch3.measure exportData "csv" "D:/Geena/Rachel/Bijels - Jan 17/3wt%/Series 8/Thickness/C/C$i.csv"
+3wtperchitinbijels-trial1_Series008_t0_ch4.measure exportData "csv" "D:/Geena/Rachel/Bijels - Jan 17/3wt%/Series 8/Thickness/L/L$i.csv"
+
+3wtperchitinbijels-trial1_Series008_t0_ch5.measure exportData "csv" "D:/Geena/Rachel/Bijels - Jan 17/3wt%/Series 8/Vol Fraction/C/C$i.csv"
+3wtperchitinbijels-trial1_Series008_t0_ch6.measure exportData "csv" "D:/Geena/Rachel/Bijels - Jan 17/3wt%/Series 8/Vol Fraction/L/L$i.csv"
+3wtperchitinbijels-trial1_Series008_t0_ch2.measure exportData "csv" "D:/Geena/Rachel/Bijels - Jan 17/3wt%/Series 8/Vol Fraction/CL/CL$i.csv"
+
+3wtperchitinbijels-trial1_Series008_t0_ch5.Smt.SptGraph exportXML "D:/Geena/Rachel/Bijels - Jan 17/3wt%/Series 8/Skeleton/C/C$i.xml"
+3wtperchitinbijels-trial1_Series008_t0_ch6.Smt.SptGraph exportXML "D:/Geena/Rachel/Bijels - Jan 17/3wt%/Series 8/Skeleton/L/L$i.xml"
+
+
+set i [expr $i + 1]
+}

@@ -1,0 +1,120 @@
+#create variables with file path and series number
+set pth "D:/Geena/Rachel/Connectivity/Nov 13/10wt%-quadrants/Raw Data/"
+set srs 15
+
+#Apply median filter
+create medianfilter
+"Median Filter" inputImage connect "min_Series0${srs}"
+"Median Filter" interpretation setValue 1
+"Median Filter" doIt setValue 0
+"Median Filter" fire
+
+#Apply interactive thresholding at 67 and 255
+create HxInteractiveThreshold
+"Interactive Thresholding" data connect ["Median Filter" getResult]
+"Interactive Thresholding" fire
+"Interactive Thresholding" intensityRange setValue 0 67
+"Interactive Thresholding" intensityRange setValue 1 255
+"Interactive Thresholding" doIt setValue 0
+"Interactive Thresholding" compute
+
+#Apply closing filter
+create diskclosing3d
+"Closing" inputImage connect ["Interactive Thresholding" getResult]
+"Closing" interpretation setValue 1
+"Closing" size setValue 1
+"Closing" doIt setValue 0
+"Closing" fire
+
+#Apply remove small spots
+create removalsmallspots
+"Remove Small Spots" inputImage connect ["Closing" getResult]
+"Remove Small Spots" interpretation setValue 0
+"Remove Small Spots" size setValue 50
+"Remove Small Spots" doIt setValue 0
+"Remove Small Spots" fire
+
+#Create compliment image
+create logical_not
+"NOT" inputImage connect ["Remove Small Spots" getResult]
+"NOT" doIt setValue 0
+"NOT" fire
+
+#Get area of each image
+create area
+"Area" inputImage connect ["Remove Small Spots" getResult]
+"Area" interpretation setValue 1
+"Area" doIt setValue 0
+"Area" fire
+create area
+"Area 2" inputImage connect ["NOT" getResult]
+"Area 2" interpretation setValue 1
+"Area 2" doIt setValue 0
+"Area 2" fire
+
+
+#Apply auto skeleton for both images
+create HxExtAutoSkeleton
+"Auto Skeleton" data connect ["Remove Small Spots" getResult]
+"Auto Skeleton" doIt setValue 0
+"Auto Skeleton" fire
+create HxExtAutoSkeleton
+"Auto Skeleton 2" data connect ["NOT" getResult]
+"Auto Skeleton 2" doIt setValue 0
+"Auto Skeleton 2" fire
+
+#Apply spatial graph statistics for both images
+create HxSpatialGraphStats
+"Spatial Graph Statistics" data connect ["Auto Skeleton" getResult]
+"Spatial Graph Statistics" doIt setValue 0
+"Spatial Graph Statistics" fire
+"Spatial Graph View" setViewerMask 16382
+"Spatial Graph View" fire
+create HxSpatialGraphStats
+"Spatial Graph Statistics 2" data connect ["Auto Skeleton 2" getResult]
+"Spatial Graph Statistics 2" doIt setValue 0
+"Spatial Graph Statistics 2" fire
+"Spatial Graph View 2" setViewerMask 16382
+"Spatial Graph View 2" fire
+
+#Apply label analysis for both images
+create HxAnalyzeLabels
+"Label Analysis" data connect ["Remove Small Spots" getResult]
+"Label Analysis" interpretation setValue 0
+"Label Analysis" doIt setValue 0
+"Label Analysis" fire
+create HxAnalyzeLabels
+"Label Analysis 2" data connect ["Not" getResult]
+"Label Analysis 2" interpretation setValue 0
+"Label Analysis 2" doIt setValue 0
+"Label Analysis 2" fire
+
+#Apply analysis filter for both images
+set val [expr [["Area" getResult] getValue 1 0]/1000]
+create HxFilterAnalysis
+"Analysis Filter" data connect ["Label Analysis" getResult]
+"Analysis Filter" filter setState "Area > ${val}"
+"Analysis Filter" doIt setValue 0
+"Analysis Filter" fire
+set val [expr [["Area" getResult] getValue 1 0]/1000]
+create HxFilterAnalysis
+"Analysis Filter 2" data connect ["Label Analysis 2" getResult]
+"Analysis Filter 2" filter setState "Area > ${val}"
+"Analysis Filter 2" doIt setValue 0
+"Analysis Filter 2" fire
+
+
+
+#save auto skeleton and spatial graph statistics data
+["Auto Skeleton" getResult] exportXML "${pth}Connectivity/S${srs}_c1.xml"
+["Spatial Graph Statistics" getResult] exportData "Microsoft XML Spreadsheet 2003" "${pth}Connectivity/S${srs}_c2.xml"
+["Auto Skeleton 2" getResult] exportXML "${pth}Connectivity/S${srs}_c3.xml"
+["Spatial Graph Statistics 2" getResult] exportData "Microsoft XML Spreadsheet 2003" "${pth}Connectivity/S${srs}_c4.xml"
+
+
+#save number of isolated objects to a text file
+set fo [open "${pth}misc/S${srs}.txt" w]
+puts $fo "Isolated Objects (L/W):"
+puts $fo [["Analysis Filter" getResult] getNumRows]
+puts $fo [["Analysis Filter 2" getResult] getNumRows]
+close $fo

@@ -1,0 +1,149 @@
+clc
+clear
+NSections = 9;
+Nimages = 90; %Total number of images in a data set
+
+check = 0;
+FreeVox = 0;
+TotalVol = 0;
+
+for Sec = 1:NSections
+    %Name of droplet data set
+    S1='Droplets';
+    S3='.tif';
+
+    %Name of particle data set
+    N1='Particles';
+    N3='.tif';
+
+    % pixels = size(imread([S1,'000',S3])); % Read dimensions of images
+    pixels = size(imread(fullfile('stitched','0.50',[int2str(Sec),'Droplets','00','.tif'])));
+    array_p = zeros(pixels(1), pixels(2), Nimages); 
+    array_d = zeros(pixels(1), pixels(2), Nimages);
+
+    %Load the 2 image sets, sections needs adjusting based on number of images
+    for slice = 0 : Nimages-1
+
+        S2=int2str(slice);
+        if slice<10
+            S=[int2str(Sec),S1,'00',S2,S3];
+         elseif slice<100
+            S=[int2str(Sec),S1,'0',S2,S3];
+        else
+            S=[int2str(Sec),S1,S2,S3];
+        end
+
+            N2=int2str(slice);
+        if slice<10
+            N=[int2str(Sec),N1,'00',N2,N3];
+         elseif slice<100
+            N=[int2str(Sec),N1,'0',N2,N3];
+        else
+            N=[int2str(Sec),N1,N2,N3];
+        end
+
+    %_d is droplet, _p is particle, text value is the name of the folder in
+    %which the data is stored
+    fullFileName_d = fullfile('0.55','Images', S);
+    fullFileName_p = fullfile('0.55','Images', N);
+
+    thisSlice_d = imread(fullFileName_d);
+    thisSlice_p = imread(fullFileName_p);
+    array_p(:,:,slice+1) = thisSlice_p;
+    array_d(:,:,slice+1) = thisSlice_d;
+end
+
+
+%Checks if each particle voxels has a straight line connection to droplet
+%voxel without passing through empty space.  If so, that voxels is free
+%floating
+for n = 1:Nimages
+    n
+    for j = 1:pixels(2)
+        for i = 2:pixels(1)-2
+            
+            if array_p(i,j,n) == 1
+                    %Check in negative x direction
+                    for x = i:-1:1
+                        if array_d(x,j,n) == 1
+                            break                            
+                        elseif array_p(x,j,n) == 0
+                            check = check + 1;
+                            break
+                        end
+                    end
+                    %Check in positive x direction
+                    if check == 1 %Loop will not continue if already found a connection to a droplet voxel
+                    for x = i:pixels(1)
+                        if array_d(x,j,n) == 1
+                            break                            
+                        elseif array_p(x,j,n) == 0
+                            check = check + 1;
+                            break
+                        end
+                    end
+                    
+                    
+                    if check == 2
+                    for y = j:-1:1
+                        if array_d(i,y,n) == 1
+                            break                            
+                        elseif array_p(i,y,n) == 0
+                            check = check + 1;
+                            break
+                        end
+                    end
+                    
+                    
+                    if check == 3
+                    for y = j:pixels(2)
+                        if array_d(i,y,n) == 1
+                            break                            
+                        elseif array_p(i,y,n) == 0
+                            check = check + 1;
+                            break
+                        end
+                    end
+                    
+                    if check == 4
+                    for z = n:-1:1
+                        if array_d(i,j,z) == 1
+                            break                            
+                        elseif array_p(i,j,z) == 0
+                            check = check + 1;
+                            break
+                        end
+                    end
+                    
+                    if check == 5
+                    for z = n:Nimages
+                        if array_d(i,j,z) == 1
+                            break                            
+                        elseif array_p(i,j,z) == 0
+                            check = check + 1;
+                            break
+                        end
+                    end
+                    %Ending if statements that check if a droplet voxels
+                    %has already been found
+                    end
+                    end
+                    end
+                    end
+                    end
+                    %if no droplet was found in any direction, that voxels
+                    %is free floating
+                if check == 6
+                    FreeVox = FreeVox + 1;
+                end
+                check = 0;
+            end
+        end
+    end
+end
+TotalVol = TotalVol + sum(sum(sum(array_p)));
+clear array_p;
+clear array_d;
+end
+%Calculate % volume at interface
+volcov = 1 - FreeVox/TotalVol

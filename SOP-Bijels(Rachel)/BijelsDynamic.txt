@@ -1,0 +1,29 @@
+set i 0
+
+while {$i < 444} {
+
+"2wtper SnowtexAK_07-19-2017_am_Dynamics" time setValue $i
+"2wtper SnowtexAK_07-19-2017_am_Dynamics" fire
+
+"Deconvolution" action setValue 1
+"Deconvolution" fire
+
+"Median Filter" doIt setValue 0
+"Median Filter" fire
+
+"Normalize Grayscale" doIt setValue 0
+"Normalize Grayscale" fire
+
+"Interactive Thresholding" intensityRange setValue 1 84
+"Interactive Thresholding" intensityRange setValue 2 255
+"Interactive Thresholding" doIt setValue 0
+"Interactive Thresholding" compute
+
+"Surface View" fire
+
+viewer 0 snapshot "D:/Geena/For Rachel/Bijels - July 19/2wt%/DynamicImages/$i.tiff"
+
+
+set i [expr $i + 1]
+}
+
